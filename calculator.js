@@ -15,7 +15,11 @@ for (i=9; i>=0;i--) {
     makeNumberButtons.addEventListener("click", (e) => {
         if (highlighResult.value === "0" && e.target.value === "0") return;
         if (highlighResult.value === "0" && e.target.value !== "0") return highlighResult.value = e.target.value;
-            highlighResult.value = Number(highlighResult.value) + e.target.value;
+        if (store.newValue) {
+            store.newValue = false;
+            return highlighResult.value = e.target.value;
+        }
+            highlighResult.value += e.target.value;
     })
     makeCalculator.appendChild(makeNumberButtons);
 }
@@ -39,9 +43,13 @@ for (lib in libFunction) {
     makeFuncButtons.style.gridArea = `${libFunction[lib]}`;
     makeFuncButtons.value = `${libFunction[lib]}`;
     makeFuncButtons.addEventListener("click", (e) => {
-        const value = e.target.value
-        func = calcFunction[e.target.value];
-        console.log(func.length)
+        const value = e.target.value;
+        if (calcFunction[value].length === 2) {
+            store.storedValue = Number(highlighResult.value)
+            store.storedFunc = calcFunction[value];
+            store.newValue = true;
+        }
+        calcFunction[value]();
     });
     makeCalculator.appendChild(makeFuncButtons);
 }
@@ -59,23 +67,28 @@ const calcFunction = {
     'multiply': function (currNum, nextNum) {
         return currNum * nextNum;
     },
-    'negative': function (currNum) {
-        return -(currNum);
+    'negative': function () {
+        highlighResult.value = -(Number(highlighResult.value))
     },
-    'cancel':function () {
+    'cancel': function () {
         highlighResult.value = 0;
     },
     'equal': function () {
-        let input1 = Number(highlighResult.value);
-        console.log(input1);
+        highlighResult.value = store.storedFunc(store.storedValue, Number(highlighResult.value));
+        store.storedFunc = '';
+        store.storedValue = '';
+        store.newValue = true;
     },
-    'percent': function (currNum) {
-        return currNum/100;
+    'percent': function () {
+        highlighResult.value = Number(highlighResult.value)/ 100;
+    },
+    'dot': function () {
+        highlighResult.value += '.'
     }
 }
 
 const highlighResult = document.createElement("input");
-highlighResult.type = "number";
+highlighResult.type = "text";
 highlighResult.style.gridArea = "rslt";
 highlighResult.value = 0;
 highlighResult.style.textAlign = "right";
@@ -84,3 +97,8 @@ makeCalculator.appendChild(highlighResult);
 document.body.appendChild(makeCalculator);
 
 
+const store = {
+    storedValue: '',
+    storedFunc: '',
+    newValue: false
+}
